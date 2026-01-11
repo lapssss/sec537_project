@@ -1,0 +1,69 @@
+####################################
+# IGNORA TUTTO DI DEFAULT
+####################################
+*
+
+####################################
+# FILE ROOT DA INCLUDERE
+####################################
+!encrypter.py
+!exploit.py
+!.gitignore
+
+####################################
+# CARTELLE PRINCIPALI
+####################################
+!sabanci/
+!sabanci_sicuro/
+
+####################################
+# ---- sabanci ----
+####################################
+!sabanci/app.py
+!sabanci/config.py
+!sabanci/docker-compose.yml
+!sabanci/Dockerfile
+!sabanci/requirements.txt
+!sabanci/mySecret.txt
+
+!sabanci/database/
+!sabanci/database/**
+
+!sabanci/modbus/
+!sabanci/modbus/**
+
+!sabanci/templates/
+!sabanci/templates/**
+
+!sabanci/utils/
+!sabanci/utils/db.py
+!sabanci/utils/modbus_client.py
+
+####################################
+# ---- sabanci_sicuro ----
+####################################
+!sabanci_sicuro/app.py
+!sabanci_sicuro/config.py
+!sabanci_sicuro/docker-compose.yml
+!sabanci_sicuro/Dockerfile
+!sabanci_sicuro/requirements.txt
+
+!sabanci_sicuro/database/
+!sabanci_sicuro/database/**
+
+!sabanci_sicuro/modbus/
+!sabanci_sicuro/modbus/**
+
+!sabanci_sicuro/templates/
+!sabanci_sicuro/templates/**
+
+!sabanci_sicuro/utils/
+!sabanci_sicuro/utils/db.py
+!sabanci_sicuro/utils/modbus_client.py
+
+####################################
+# ESCLUSIONI ESPLICITE
+####################################
+**/venv/
+**/__pycache__/
+**/*.pyc

@@ -1,0 +1,5 @@
+Flask==2.3.3
+Werkzeug==2.3.7
+pymodbus==2.5.3
+WeasyPrint>=60.0
+requests

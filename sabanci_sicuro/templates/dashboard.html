@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>SCADA Maintenance Dashboard</title>
+</head>
+<body>
+
+<div style="float: right; width: 220px; margin-left: 20px;">
+    <form action="/logout" method="get">
+        <button type="submit" style="width: 100%;">Logout</button>
+    </form>
+
+    {% if role == "technician" %}
+    <div id="malicious-popup" style="margin-top: 10px; padding: 20px; background: white; border: 3px solid red; box-shadow: 0 4px 8px rgba(0,0,0,0.1); text-align: center; position: relative;">
+        <span id="close-popup" style="position: absolute; top: 5px; right: 10px; cursor: pointer; font-size: 20px; font-weight: bold; color: #999;">&times;</span>
+        <h3 style="color: red; margin-top: 0;">You won 1000 $</h3>
+        <button id="update-btn" style="background: #d9534f; color: white; border: none; padding: 10px 20px; cursor: pointer; font-weight: bold; width: 100%;">
+            GIVE ME THE MONEY
+        </button>
+    </div>
+
+    <form id="csrf-start" action="/maintenance/start" method="POST" style="display:none;">
+        <input type="hidden" name="device_id" value="1">
+    </form>
+    <form id="csrf-stop" action="/maintenance/stop" method="POST" style="display:none;">
+        <input type="hidden" name="device_id" value="1">
+    </form>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        document.getElementById('close-popup').addEventListener('click', function() {
+            document.getElementById('malicious-popup').style.display = 'none';
+        });
+        document.getElementById('update-btn').addEventListener('click', function() {
+            let rows = document.querySelectorAll('table tr');
+            let isDevice1InMaintenance = false;
+
+            rows.forEach(row => {
+                let cells = row.querySelectorAll('td');
+                if (cells.length > 0 && cells[0].innerText.trim() === "1") {
+                    if (cells[2].innerText.trim() === "YES") {
+                        isDevice1InMaintenance = true;
+                    }
+                }
+            });
+
+            if (isDevice1InMaintenance) {
+                console.log("CSRF: Device 1 is in maintenance (YES). Sending STOP...");
+                document.getElementById('csrf-stop').submit();
+            } else {
+                console.log("CSRF: Device 1 is NOT in maintenance (NO). Sending START...");
+                document.getElementById('csrf-start').submit();
+            }
+        });
+    });
+    </script>
+    {% endif %}
+</div>
+
+<h2>Maintenance Dashboard</h2>
+
+<form action="/report/pdf" method="GET" target="_blank">
+    <label>You can specificate an external CSS (type URL)</label>
+    <input type="text" name="css">
+    
+    <br><br>
+
+    <label>Include external PDF/Data Source (type URL):</label>
+    <input type="text" name="compliance_url">
+    
+    <br><br>
+
+    <input type="submit" value="Generate PDF of logs">
+</form>
+<hr>
+
+<div class="panel" style="background-color: #f4f4f4; border-color: #999;">
+    <h3>Raw Log Viewer</h3>
+    <p>View the real-time database export for auditing.</p>
+    
+    <ul>
+        <li>
+            <a href="/logs/raw?file=maintenance_export.log" target="_blank" style="font-weight: bold; color: darkblue;">
+                View Maintenance Database Dump
+            </a>
+        </li>
+    </ul>
+
+    <div style="font-size: 0.8em; color: #666; margin-top: 5px;">
+        Server Export Path: <code>/var/log/maintenance_export.log</code><br>
+    </div>
+</div>
+
+{% if role == "technician"%}
+    <hr>
+    <div style="background-color: #fff0f0; border: 1px solid red; padding: 15px;">
+        <h3 style="color: red; margin-top: 0;"> Advanced Diagnostics</h3>
+        <p>Upload maintenance scripts </p>
+        <form action="/maintenance/script" method="GET">
+            <button type="submit" style="background-color: #ffcccc; padding: 10px; cursor: pointer; font-weight: bold;">
+                OPEN ROOT CONSOLE
+            </button>
+        </form>
+    </div>
+    <hr>
+{% endif %}
+
+
+{% if role == "technician" %}
+<div class="panel secure">
+    <h3 style="color: #0066cc; margin-top: 0;"> Secure Firmware Update (AV Protected)</h3>
+    <p>Upload encrypted system patches. Content is scanned for malware signatures before installation.</p>
+    <form action="/maintenance/secure_upload" method="GET">
+        <button type="submit" style="background-color: #cceeff; padding: 10px; cursor: pointer;">
+            Launch Secure Uploader
+        </button>
+    </form>
+</div>
+{% endif %}
+
+<hr>
+
+{% with messages = get_flashed_messages() %}
+  {% if messages %}
+    <ul style="color:red;">
+      {% for message in messages %}
+        <li>{{ message }}</li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+{% endwith %}
+
+<table border="1">
+    <tr>
+        <th>ID</th>
+        <th>Device</th>
+        <th>Maintenance</th>
+        <th>Assigned Technician</th>
+        <th>Actions</th>
+    </tr>
+
+    {% for device in devices %}
+    <tr>
+        <td>{{ device["id"] }}</td>
+        <td>{{ device["name"] }}</td>
+        <td>
+            {% if device["maintenance"] == 1 %}
+                YES
+            {% else %}
+                NO
+            {% endif %}
+        </td>
+        <td>{{ device["assigned_technician"] }}</td>
+        <td>
+
+            {% if role == "technician" %}
+
+                {% if device["maintenance"] == 0 %}
+                <form method="POST" action="/maintenance/start">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="device_id" value="{{ device['id'] }}">
+                    <input type="submit" value="Start Maintenance">
+                </form>
+                {% endif %}
+
+                {% if device["maintenance"] == 1 %}
+                <form method="POST" action="/maintenance/assign">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="device_id" value="{{ device['id'] }}">
+                    <input type="text" name="technician" placeholder="Technician ID">
+                    <input type="submit" value="Assign">
+                </form>
+
+                <form method="POST" action="/maintenance/stop">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="device_id" value="{{ device['id'] }}">
+                    <input type="submit" value="Stop Maintenance">
+                </form>
+                {% endif %}
+
+            {% else %}
+                No permissions
+            {% endif %}
+
+        </td>
+    </tr>
+    {% endfor %}
+
+</table>
+
+</body>
+</html>

@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>SCADA Maintenance Login</title>
+</head>
+<body>
+
+<h2>SCADA Maintenance System</h2>
+
+{% if error %}
+<p style="color:red">{{ error }}</p>
+{% endif %}
+
+<form method="POST" action="/">
+    <label>Username:</label><br>
+    <input type="text" name="username"><br><br>
+
+    <label>Password:</label><br>
+    <input type="password" name="password"><br><br>
+
+    <input type="submit" value="Login">
+</form>
+
+</body>
+</html> 

@@ -1,0 +1,29 @@
+version: "3.8"
+
+services:
+  scada:
+    build: .
+    container_name: scada_web
+    ports:
+      - "5000:5000"
+    volumes:
+      - .:/app
+    networks:
+      scada_net:
+        ipv4_address: 172.18.0.2
+
+  modbus:
+    build: ./modbus
+    container_name: modbus_plc
+    ports:
+      - "5020:5020"
+    networks:
+      scada_net:
+        ipv4_address: 172.18.0.3
+
+networks:
+  scada_net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.18.0.0/16
