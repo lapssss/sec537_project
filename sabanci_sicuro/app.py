@@ -168,6 +168,13 @@ def start_maintenance():
     if device_id in last_state_change:
         delta = (now - last_state_change[device_id]).total_seconds()
         if delta < 10:  # 10 seconds limit
+            db.execute(
+                """
+                INSERT INTO maintenance_logs
+                VALUES (NULL, ?, ?, 'RATE_LIMITING_ATTACK', NULL, datetime('now'))
+                """,
+                (device_id,session["user_id"])
+            )
             flash(f"SAFETY ALERT: Hardware protection active. Wait {10 - int(delta)}s.")
             return redirect("/dashboard")
     
@@ -176,6 +183,13 @@ def start_maintenance():
 
     #PATCH 3.2
     if (active_count - 1) < (total_count / 2):
+        db.execute(
+                """
+                INSERT INTO maintenance_logs
+                VALUES (NULL, NULL, ?, 'POSSIBLE_ATTACK', NULL, datetime('now'))
+                """,
+                (session["user_id"])
+        )
         flash("OPERATIONAL WARNING: System operating below 50% capacity!")
         # Note: only a warning is throw, the action is still possible !
 
@@ -284,6 +298,13 @@ def stop_maintenance():
     if device_id in last_state_change:
         delta = (now - last_state_change[device_id]).total_seconds()
         if delta < 10:  # 10 seconds limit
+            db.execute(
+                """
+                INSERT INTO maintenance_logs
+                VALUES (NULL, ?, ?, 'RATE_LIMITING_ATTACK', NULL, datetime('now'))
+                """,
+                (device_id,session["user_id"])
+            )
             flash(f"SAFETY ALERT: Hardware protection active. Wait {10 - int(delta)}s.")
             return redirect("/dashboard")
 
@@ -325,17 +346,31 @@ def generate_pdf_report():
             parsed = urlparse(css_input)
             # Check protocollo
             if parsed.scheme not in ['http', 'https']:
+                db.execute(
+                    """
+                    INSERT INTO maintenance_logs
+                    VALUES (NULL, NULL, ?, 'SSRF', NULL, datetime('now'))
+                    """,
+                    (session["user_id"])
+                )
                 return "SECURITY ERROR: Only HTTP/HTTPS allowed for CSS.", 400
             
             # Check dominio (Allowlist per CSS)
             domain = parsed.netloc.lower().split(':')[0]
             ALLOWED_CSS_DOMAIN = 'cdn.jsdelivr.net'
             if domain != ALLOWED_CSS_DOMAIN:
+                db.execute(
+                    """
+                    INSERT INTO maintenance_logs
+                    VALUES (NULL, NULL, ?, 'SSRF', NULL, datetime('now'))
+                    """,
+                    (session["user_id"])
+                )
                 return f"SECURITY ERROR: Domain '{domain}' not trusted for CSS.", 403
         except:
             return "Invalid CSS URL", 400
     
-    #(PATCH 2.2 - SSRF)
+    #(PATCH 2.2 - SSRF
     target_url = request.args.get("compliance_url", "") 
     compliance_data = "No external data requested."
 
@@ -348,6 +383,13 @@ def generate_pdf_report():
             except Exception as e:
                 compliance_data = f"Error fetching data: {str(e)}"
         else:
+            db.execute(
+                """
+                INSERT INTO maintenance_logs
+                VALUES (NULL, NULL, ?, 'SSRF', NULL, datetime('now'))
+                """,
+                (session["user_id"])
+            )
             compliance_data = "SECURITY ERROR: URL blocked by security policy (Allowlist)."
             
     db = get_db()
@@ -494,6 +536,13 @@ def secure_upload():
                 #PATCHED SCANNING AFTER DECRYPTION
                 is_safe, message = security_scanner(content)
                 if not is_safe:
+                    db.execute(
+                        """
+                        INSERT INTO maintenance_logs
+                        VALUES (NULL, NULL, ?, 'CWE-434-Encrypted', NULL, datetime('now'))
+                        """,
+                        (session["user_id"])
+                    )
                     return f"SECURITY ALERT: {message}"
                 temp_path = "/tmp/payload.py"
                 with open(temp_path, "wb") as f:
@@ -563,6 +612,13 @@ def raw_logs():
     real_path = os.path.abspath(unsafe_path)
     
     if os.path.commonprefix([base_dir, real_path]) != base_dir:
+        db.execute(
+            """
+            INSERT INTO maintenance_logs
+            VALUES (NULL, NULL, ?, 'PATH_TRAVERSAL', NULL, datetime('now'))
+            """,
+            (session["user_id"])
+        )
         print(f"!!! SECURITY ALERT !!! Tentativo di Path Traversal bloccato: {requested_file}", flush=True)
         return "Access Denied: Invalid file path.", 403
 
