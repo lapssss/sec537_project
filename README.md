@@ -11,9 +11,9 @@
     http://localhost:5000
 
 ---
-##sabanci is the vulnerable version of the system
+## sabanci is the vulnerable version of the system
 
-##sabanci_sicuro is the patched version
+## sabanci_sicuro is the patched version
 
 ---
 
@@ -57,3 +57,4 @@ This file contains sensitive information:
 
 
 ---
+
