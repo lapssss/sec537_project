@@ -11,6 +11,11 @@
     http://localhost:5000
 
 ---
+##sabanci is the vulnerable version of the system
+
+##sabanci_sicuro is the patched version
+
+---
 
 ## File Description
 
@@ -49,5 +54,6 @@ This file contains sensitive information:
 
 - The file is unintentionally exposed due to **Vulnerability 2.5 – File Path Injection / Directory Traversal**.
 - It demonstrates how improper path validation allows attackers to access confidential files.
+
 
 ---
