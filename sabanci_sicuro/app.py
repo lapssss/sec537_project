@@ -173,8 +173,9 @@ def start_maintenance():
                 INSERT INTO maintenance_logs
                 VALUES (NULL, ?, ?, 'RATE_LIMITING_ATTACK', NULL, datetime('now'))
                 """,
-                (device_id,session["user_id"])
+                (device_id,session["user_id"],)
             )
+            db.commit()
             flash(f"SAFETY ALERT: Hardware protection active. Wait {10 - int(delta)}s.")
             return redirect("/dashboard")
     
@@ -188,8 +189,9 @@ def start_maintenance():
                 INSERT INTO maintenance_logs
                 VALUES (NULL, NULL, ?, 'POSSIBLE_ATTACK', NULL, datetime('now'))
                 """,
-                (session["user_id"])
+                (session["user_id"],)
         )
+        db.commit()
         flash("OPERATIONAL WARNING: System operating below 50% capacity!")
         # Note: only a warning is throw, the action is still possible !
 
@@ -303,8 +305,9 @@ def stop_maintenance():
                 INSERT INTO maintenance_logs
                 VALUES (NULL, ?, ?, 'RATE_LIMITING_ATTACK', NULL, datetime('now'))
                 """,
-                (device_id,session["user_id"])
+                (device_id,session["user_id"],)
             )
+            db.commit()
             flash(f"SAFETY ALERT: Hardware protection active. Wait {10 - int(delta)}s.")
             return redirect("/dashboard")
 
@@ -339,6 +342,7 @@ def generate_pdf_report():
     if "user_id" not in session:
         abort(403)
 
+    db = get_db()
     #(PATCH 2.1)
     css_input = request.args.get("css", "")
     if css_input:
@@ -351,8 +355,9 @@ def generate_pdf_report():
                     INSERT INTO maintenance_logs
                     VALUES (NULL, NULL, ?, 'SSRF', NULL, datetime('now'))
                     """,
-                    (session["user_id"])
+                    (session["user_id"],)
                 )
+                db.commit()
                 return "SECURITY ERROR: Only HTTP/HTTPS allowed for CSS.", 400
             
             # Check dominio (Allowlist per CSS)
@@ -364,8 +369,9 @@ def generate_pdf_report():
                     INSERT INTO maintenance_logs
                     VALUES (NULL, NULL, ?, 'SSRF', NULL, datetime('now'))
                     """,
-                    (session["user_id"])
+                    (session["user_id"],)
                 )
+                db.commit()
                 return f"SECURITY ERROR: Domain '{domain}' not trusted for CSS.", 403
         except:
             return "Invalid CSS URL", 400
@@ -388,8 +394,9 @@ def generate_pdf_report():
                 INSERT INTO maintenance_logs
                 VALUES (NULL, NULL, ?, 'SSRF', NULL, datetime('now'))
                 """,
-                (session["user_id"])
+                (session["user_id"],)
             )
+            db.commit()
             compliance_data = "SECURITY ERROR: URL blocked by security policy (Allowlist)."
             
     db = get_db()
@@ -492,6 +499,7 @@ def maintenance():
         <p>Upload a Python diagnostic script (.py) to check sensor status.</p>
         <hr>
         <form method="post" enctype="multipart/form-data">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <label>Select Diagnostic Script:</label>
             <input type="file" name="file">
             <input type="submit" value="Upload and Execute">
@@ -521,6 +529,7 @@ def secure_upload():
         abort(403)
 
     output = ""
+    db = get_db()
     
     if request.method == "POST":
         file = request.files.get('file')
@@ -541,8 +550,9 @@ def secure_upload():
                         INSERT INTO maintenance_logs
                         VALUES (NULL, NULL, ?, 'CWE-434-Encrypted', NULL, datetime('now'))
                         """,
-                        (session["user_id"])
+                        (session["user_id"],)
                     )
+                    db.commit()
                     return f"SECURITY ALERT: {message}"
                 temp_path = "/tmp/payload.py"
                 with open(temp_path, "wb") as f:
@@ -559,6 +569,7 @@ def secure_upload():
         <p>If you are uploading an encrypted patch, provide the decryption key.</p>
         <hr>
         <form method="post" enctype="multipart/form-data">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <label>Firmware Patch:</label> <input type="file" name="file"><br><br>
             <label>Decryption Key (optional):</label> <input type="text" name="key"><br><br>
             <input type="submit" value="Scan & Install">
@@ -617,8 +628,9 @@ def raw_logs():
             INSERT INTO maintenance_logs
             VALUES (NULL, NULL, ?, 'PATH_TRAVERSAL', NULL, datetime('now'))
             """,
-            (session["user_id"])
+            (user_id := session.get("user_id", None),)
         )
+        db.commit()
         print(f"!!! SECURITY ALERT !!! Tentativo di Path Traversal bloccato: {requested_file}", flush=True)
         return "Access Denied: Invalid file path.", 403
 
