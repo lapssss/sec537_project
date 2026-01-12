@@ -16,6 +16,17 @@
 ## sabanci_sicuro is the patched version
 
 ---
+# List of User
+
+| ID | Username  | Ruolo        | Password        |
+|----|-----------|--------------|-----------------|
+| 1  | Mario     | normal       | password123    |
+| 2  | Luigi     | normal       | maint2024      |
+| 3  | Giorgio   | normal       | wrench!        |
+| 4  | superman  | technician   | supervisor123  |
+| 5  | admin     | technician   | forzatoro      |
+
+---
 
 ## File Description
 
@@ -57,4 +68,5 @@ This file contains sensitive information:
 
 
 ---
+
 
